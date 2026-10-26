@@ -1,13 +1,18 @@
-"""Leave permissions and a deliberately non-public module registration."""
+"""Leave permissions and its self-service navigation entry."""
 
 MODULE = {
     "code": "leave", "label": "Leave", "icon": "FaCalendarAlt",
     "base_path": "/leave", "nav_section": "Services", "sort_order": 30,
-    # The API foundation is not a complete employee workflow yet.
-    "status": "planned",
+    "status": "active",
 }
 
-NAV_ITEMS = []
+NAV_ITEMS = [
+    {
+        "code": "leave.requests", "label": "My Leave Requests",
+        "icon": "FaCalendarAlt", "to": "/leave/requests",
+        "required_permission": "leave.request.view_self", "sort_order": 10,
+    },
+]
 
 PERMISSIONS = [
     ("leave.request.view_self", "View own leave requests"),

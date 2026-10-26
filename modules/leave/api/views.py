@@ -36,7 +36,7 @@ class LeaveRequestListCreateView(APIView):
 class LeaveRequestWithdrawView(APIView):
     permission_classes = [MODULE, HasPermission(P_DELETE)]
 
-    @extend_schema(responses=LeaveRequestSerializer)
+    @extend_schema(request=None, responses={200: LeaveRequestSerializer})
     def post(self, request, pk: int):
         row = service.withdraw(actor=request.principal, request_id=pk)
         return Response(LeaveRequestSerializer(row).data)

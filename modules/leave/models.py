@@ -30,8 +30,13 @@ class LeaveRequest(TimeStampedModel, UserScopedModel):
     ]
 
     STATUS_PENDING = "pending"
+    STATUS_APPROVED = "approved"
     STATUS_WITHDRAWN = "withdrawn"
-    STATUSES = [(STATUS_PENDING, "Pending"), (STATUS_WITHDRAWN, "Withdrawn")]
+    STATUSES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_APPROVED, "Approved"),
+        (STATUS_WITHDRAWN, "Withdrawn"),
+    ]
 
     category = models.CharField(max_length=2, choices=CATEGORIES)
     starts_on = models.DateField()
@@ -46,7 +51,10 @@ class LeaveRequest(TimeStampedModel, UserScopedModel):
     class Meta:
         db_table = "leave_request"
         ordering = ["-starts_on", "-created_at"]
-        indexes = [models.Index(fields=["user_id", "status", "starts_on"])]
+        indexes = [models.Index(
+            fields=["user_id", "status", "starts_on"],
+            name="leave_reque_user_id_1bdb3e_idx",
+        )]
         constraints = [
             models.CheckConstraint(
                 condition=Q(ends_on__gte=models.F("starts_on")),
@@ -55,5 +63,13 @@ class LeaveRequest(TimeStampedModel, UserScopedModel):
             models.CheckConstraint(
                 condition=(Q(category="cl") | Q(cl_half="full")),
                 name="leave_request_half_only_for_cl",
+            ),
+            models.CheckConstraint(
+                condition=Q(cl_half__in=["full", "first", "second"]),
+                name="leave_request_valid_half_day",
+            ),
+            models.CheckConstraint(
+                condition=Q(station_leave=False) | ~Q(station_leave_details=""),
+                name="leave_request_station_details_required",
             ),
         ]

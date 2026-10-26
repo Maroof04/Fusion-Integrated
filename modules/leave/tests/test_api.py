@@ -68,6 +68,24 @@ def test_same_half_day_is_blocked_but_other_half_is_allowed(stub_iam):
                   format="json").status_code == 201
 
 
+def test_approved_request_also_blocks_an_overlapping_application(stub_iam):
+    LeaveRequest.objects.create(
+        user_id=1001, category="cl", starts_on=date(2026, 10, 12),
+        ends_on=date(2026, 10, 12), cl_half="full", reason="Approved",
+        status=LeaveRequest.STATUS_APPROVED,
+    )
+    c = client(stub_iam, permissions=(CREATE,))
+    assert c.post("/api/v1/leave/requests", payload(cl_half="full"),
+                  format="json").status_code == 409
+
+
+def test_station_leave_details_are_required(stub_iam):
+    c = client(stub_iam, permissions=(CREATE,))
+    response = c.post("/api/v1/leave/requests", payload(station_leave=True), format="json")
+    assert response.status_code == 400
+    assert "station_leave_details" in response.json()
+
+
 def test_withdrawal_is_terminal(stub_iam):
     c = client(stub_iam, permissions=(CREATE, DELETE))
     request_id = c.post("/api/v1/leave/requests", payload(), format="json").json()["id"]

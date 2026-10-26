@@ -9,6 +9,9 @@ class LeaveRuleError(ValueError):
     """A request violates a leave rule before it reaches persistence."""
 
 
+VALID_HALF_DAYS = frozenset({"full", "first", "second"})
+
+
 @dataclass(frozen=True)
 class RequestPeriod:
     category: str
@@ -22,10 +25,22 @@ def validate_period(period: RequestPeriod) -> None:
         raise LeaveRuleError("Only CL and RH are available in this foundation.")
     if period.ends_on < period.starts_on:
         raise LeaveRuleError("The leave end date cannot be before the start date.")
+    if period.cl_half not in VALID_HALF_DAYS:
+        raise LeaveRuleError("The leave half-day value is invalid.")
     if period.category != "cl" and period.cl_half != "full":
         raise LeaveRuleError("Only CL can be requested as a half day.")
     if period.cl_half != "full" and period.starts_on != period.ends_on:
         raise LeaveRuleError("A half-day CL request must cover one date.")
+
+
+def validate_request(*, period: RequestPeriod, reason: str, station_leave: bool,
+                     station_leave_details: str) -> None:
+    """Validate data common to every leave-request write boundary."""
+    validate_period(period)
+    if not reason.strip():
+        raise LeaveRuleError("A leave reason is required.")
+    if station_leave and not station_leave_details.strip():
+        raise LeaveRuleError("Station Leave details are required.")
 
 
 def overlaps(left: RequestPeriod, right: RequestPeriod) -> bool:
